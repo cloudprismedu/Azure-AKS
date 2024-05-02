@@ -22,6 +22,7 @@ A kubernetes cluster is divided into two components:
 ![kubernetes-cluster-architecture](Images/kubernetes-cluster-architecture.png)
 
 ### **Control Plane:**
+-----------------------
 
 - When we create an AKS cluster, the Azure platform automatically creates and configures its associated control plane.
 - This single-tenant control plane is provided at no cost as a managed Azure resource abstracted from the user.
@@ -40,6 +41,7 @@ A kubernetes cluster is divided into two components:
 **NOTE:** Keep in mind that we can't directly access the control plane. Kubernetes control plane and node upgrades are orchestrated through the Azure Portal. To Troubleshoot possible issues, you can review the control plane logs using Azure Monitor.
 
 ### **Nodes:**
+---------------
 
 - To run your applications and supporting services, you need a kubernetes node.
 - Each `AKS Cluster` has at least one node, an Azure Virtual Machine(VM) that runs the kubernetes node components and container runtime.
@@ -61,3 +63,42 @@ A kubernetes cluster is divided into two components:
 - When you create an AKS cluster or scale out the number of nodes, the Azure Platform automatically creates and configures the requested number of VMs.
 - Agent Nodes are billed as standard VMs, so any VM size discounts, including Azure reservations, are automatically applied.
 - For managed disks, default size and performance are assigned according to the selected VM SKU and vCPU count.
+
+### **OS Configuration:**
+--------------------------
+
+- AKS Supports Ubuntu 22.04 and Azure Linux 2.0 as the node operating system(OS) for clusters with Kubernetes 1.25 and higher.
+- Ubuntu 18.04 can also be specified at node pool creation for Kubernetes versions 1.24 and below.
+- AKS supports Windows Server 2022 as the default OS for Windows node pools in clusters with Kubernetes 1.25 and higher.
+- Windows Server 2019 can also be specified at node pool creation for Kubernetes versions 1.32 and below.
+- Windows Server 2019 is being retired after Kubernetes version 1.32 reaches end of life and isn't supported in feature releases.
+
+### **Container runtime Configuration:**
+-----------------------------------------
+
+- A container runtime is software that executes containers and manages container images on a node.
+- The runtime helps abstract away sys-calls or OS-specific functionality to run containers on Linux or Windows.
+For Linux node pools, `containerd` is used on Kubernetes version 1.19 and higher.
+- For Windows Server 2019 and 2022 node pools, `containerd` is generally available and is the only runtime option on Kubernetes version 1.23 and higher.
+- As of May 2023, Docker is retired and no longer supported.
+- `Containerd` is an OCI (open Container Intiative) compliant core container runtime that provides the minimum set of required functionality to execute containers and manage images on a node.
+- With `Containerd`-based nodes and node pools, the kubelet talks directly to `containerd` using the CRI(container runtime interface) plugin, removing extra hops in the data flow when compared to the Docker CRI implementation.
+- As such, you we better pod startup latency and less resource (CPU and memory) usage.
+- `Containered` works on every GA version of Kubernetes in AKS, in every Kubernetes version starting from v1.19, and supports all kubernetes and AKS features.
+- Clusters with Linux node pools created on Kubernetes v1.19 or higher default to the `containerd` container runtime.
+- Clusters with node pools on a earlier supported kubernetes versions receive Docker for their container runtime.
+- Linux node pools will be updated to `containerd` once the node pool kubernetes version is updated to a version that supports `containerd`.
+- `containerd` is generally available for clusters with Windows Server 2019 and 2022 node pools and is the only container runtime option for Kubernetes v1.23 and higher.
+- You can continue using Docker node pools and clusters on version earlier than 1.23, but Docker is no longer supported as of May 2023.
+
+### **Node Pools:**
+--------------------
+
+- Nodes of the same configuration are groped together into node pools.
+- Each kubernetes cluster contains at least one node pool.
+- you define the initial number of nodes and sizes when you create an AKS cluster, which creates a default node pool.
+- This default node pool in AKS contains the underlying VMs that run your agent nodes.
+- To ensure your cluster operates reliably, you should run at least two nodes in the default node pool.
+- You scale or upgrade an AKS cluster against the default node pool.
+- You can choose to scale or upgrade a specific node pool.
+- For upgrade operations, running containers are scheduled on other nodes in the node pool until all the nodes are successfully upgraded.
